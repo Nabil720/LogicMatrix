@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-config
+  namespace: logicmatrix
+  labels:
+    app: frontend
+    project: logicmatrix
+data:
+  BACKEND_URL: "http://backend-svc.logicmatrix.svc.cluster.local:8080"

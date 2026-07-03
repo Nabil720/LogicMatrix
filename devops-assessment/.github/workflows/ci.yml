@@ -1,0 +1,58 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    name: Build, Push & Update Manifests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set image tag
+        id: tag
+        run: echo "value=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: devops-assessment/backend
+          push: true
+          tags: |
+            nanil0034/logicmatrix-backend:${{ steps.tag.outputs.value }}
+            nanil0034/logicmatrix-backend:latest
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: devops-assessment/frontend
+          push: true
+          tags: |
+            nanil0034/logicmatrix-frontend:${{ steps.tag.outputs.value }}
+            nanil0034/logicmatrix-frontend:latest
+
+      - name: Update image tags in manifests
+        run: |
+          TAG=${{ steps.tag.outputs.value }}
+          sed -i "s|nanil0034/logicmatrix-backend:.*|nanil0034/logicmatrix-backend:${TAG}|g" K8s-manifest/backend-deployment.yaml
+          sed -i "s|nanil0034/logicmatrix-frontend:.*|nanil0034/logicmatrix-frontend:${TAG}|g" K8s-manifest/frontend-deployment.yaml
+
+      - name: Commit updated manifests
+        run: |
+          TAG=${{ steps.tag.outputs.value }}
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add K8s-manifest/backend-deployment.yaml K8s-manifest/frontend-deployment.yaml
+          git diff --staged --quiet || git commit -m "ci: update image tag to ${TAG} [skip ci]"
+          git push
