@@ -92,4 +92,4 @@ Images are published at: https://hub.docker.com/repositories/nanil0034
 | Secret | Value |
 |---|---|
 | `DOCKERHUB_USERNAME` | `nanil0034` |
-| `DOCKERHUB_TOKEN` | Your Docker Hub access token |
+| `DOCKERHUB_TOKEN` |  <access token> |
