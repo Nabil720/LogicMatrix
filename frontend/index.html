@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LogicMatrix — App Status</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0f1a;
+      --surface: #141728;
+      --card: #1a1f35;
+      --border: rgba(99,120,255,0.18);
+      --primary: #6378ff;
+      --primary-glow: rgba(99,120,255,0.35);
+      --accent: #00e5c0;
+      --accent-glow: rgba(0,229,192,0.28);
+      --text: #e8eaf6;
+      --muted: #7b82a8;
+      --success: #00e5c0;
+      --error: #ff5b7f;
+      --warning: #ffc266;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      overflow-x: hidden;
+    }
+
+    /* Animated background blobs */
+    body::before, body::after {
+      content: '';
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(90px);
+      opacity: 0.18;
+      pointer-events: none;
+      animation: drift 12s ease-in-out infinite alternate;
+    }
+    body::before {
+      width: 520px; height: 520px;
+      background: var(--primary);
+      top: -120px; left: -120px;
+    }
+    body::after {
+      width: 400px; height: 400px;
+      background: var(--accent);
+      bottom: -100px; right: -100px;
+      animation-delay: -6s;
+    }
+    @keyframes drift {
+      from { transform: translate(0, 0) scale(1); }
+      to   { transform: translate(40px, 30px) scale(1.08); }
+    }
+
+    .wrapper { position: relative; z-index: 1; width: 100%; max-width: 680px; }
+
+    /* ── Header ── */
+    header { text-align: center; margin-bottom: 2.5rem; }
+    .logo {
+      display: inline-flex; align-items: center; gap: .6rem;
+      font-size: 1rem; font-weight: 600; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--primary);
+      margin-bottom: 1.2rem;
+    }
+    .logo-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 12px var(--accent-glow);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.4); opacity: .7; }
+    }
+    h1 { font-size: 2.4rem; font-weight: 700; line-height: 1.15;
+         background: linear-gradient(135deg, #fff 30%, var(--primary));
+         -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .subtitle { margin-top: .6rem; color: var(--muted); font-size: .95rem; }
+
+    /* ── Cards ── */
+    .grid { display: grid; gap: 1.2rem; }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem 1.8rem;
+      position: relative;
+      overflow: hidden;
+      transition: transform .25s, border-color .25s, box-shadow .25s;
+    }
+    .card:hover {
+      transform: translateY(-3px);
+      border-color: var(--primary);
+      box-shadow: 0 8px 40px var(--primary-glow);
+    }
+    .card::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(99,120,255,.05) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+    .card-title {
+      font-size: .75rem; font-weight: 600; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--muted);
+    }
+    .endpoint-badge {
+      font-size: .72rem; font-weight: 500;
+      background: rgba(99,120,255,.15); color: var(--primary);
+      border: 1px solid rgba(99,120,255,.3);
+      border-radius: 20px; padding: .2rem .7rem;
+      font-family: 'Courier New', monospace;
+    }
+
+    .response-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.2rem;
+      font-family: 'Courier New', monospace;
+      font-size: .9rem;
+      min-height: 56px;
+      display: flex; align-items: center;
+      color: var(--text);
+      word-break: break-all;
+      transition: border-color .3s;
+    }
+    .response-box.ok   { border-color: var(--success); color: var(--success); }
+    .response-box.err  { border-color: var(--error);   color: var(--error);   }
+
+    /* ── Status indicator ── */
+    .status-row {
+      display: flex; align-items: center; gap: .5rem;
+      margin-top: .75rem; font-size: .82rem; color: var(--muted);
+    }
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--muted); flex-shrink: 0;
+      transition: background .3s, box-shadow .3s;
+    }
+    .dot.ok  { background: var(--success); box-shadow: 0 0 8px var(--accent-glow); animation: pulse 2s infinite; }
+    .dot.err { background: var(--error);   box-shadow: 0 0 8px rgba(255,91,127,.4); }
+
+    /* ── Refresh button ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: .5rem;
+      background: linear-gradient(135deg, var(--primary), #8b5cf6);
+      color: #fff; font-family: 'Inter', sans-serif;
+      font-size: .88rem; font-weight: 600;
+      border: none; border-radius: 10px;
+      padding: .7rem 1.5rem; cursor: pointer;
+      transition: opacity .2s, transform .15s, box-shadow .2s;
+      box-shadow: 0 4px 20px var(--primary-glow);
+      margin-top: 1.5rem; width: 100%;
+      justify-content: center;
+    }
+    .btn:hover  { opacity: .9; transform: translateY(-1px); box-shadow: 0 8px 28px var(--primary-glow); }
+    .btn:active { transform: scale(.98); }
+    .btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+    .spinner {
+      width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.3);
+      border-top-color: #fff; border-radius: 50%;
+      animation: spin .7s linear infinite; display: none;
+    }
+    .btn.loading .spinner { display: block; }
+    .btn.loading .btn-text { opacity: .7; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Footer ── */
+    footer {
+      margin-top: 2.5rem; text-align: center;
+      color: var(--muted); font-size: .78rem;
+    }
+    footer span { color: var(--primary); }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <header>
+      <div class="logo"><div class="logo-dot"></div>LogicMatrix</div>
+      <h1>Service Dashboard</h1>
+      <p class="subtitle">Real-time status from the backend API</p>
+    </header>
+
+    <div class="grid">
+      <!-- Root endpoint -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Root Endpoint</span>
+          <span class="endpoint-badge">GET /</span>
+        </div>
+        <div class="response-box" id="root-response">Fetching…</div>
+        <div class="status-row">
+          <div class="dot" id="root-dot"></div>
+          <span id="root-status">Connecting to backend…</span>
+        </div>
+      </div>
+
+      <!-- Health endpoint -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Health Check</span>
+          <span class="endpoint-badge">GET /health</span>
+        </div>
+        <div class="response-box" id="health-response">Fetching…</div>
+        <div class="status-row">
+          <div class="dot" id="health-dot"></div>
+          <span id="health-status">Connecting to backend…</span>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn" id="refresh-btn" onclick="fetchAll()">
+      <div class="spinner"></div>
+      <span class="btn-text">↻ &nbsp;Refresh Status</span>
+    </button>
+
+    <footer>
+      Backend URL: <span id="backend-url-display"></span> &nbsp;|&nbsp; LogicMatrix © 2026
+    </footer>
+  </div>
+
+  <script>
+    // In Docker Compose, the backend is exposed on host port 8080.
+    // BACKEND_URL is injected at build time via Nginx env substitution or falls back.
+    const BACKEND_URL = window.__BACKEND_URL__ || 'http://localhost:8080';
+
+    document.getElementById('backend-url-display').textContent = BACKEND_URL;
+
+    async function fetchEndpoint(url) {
+      const res = await fetch(url);
+      const text = await res.text();
+      return { ok: res.ok, text };
+    }
+
+    async function fetchAll() {
+      const btn = document.getElementById('refresh-btn');
+      btn.classList.add('loading');
+      btn.disabled = true;
+
+      const [rootResult, healthResult] = await Promise.allSettled([
+        fetchEndpoint(BACKEND_URL + '/'),
+        fetchEndpoint(BACKEND_URL + '/health'),
+      ]);
+
+      // Root
+      const rootBox  = document.getElementById('root-response');
+      const rootDot  = document.getElementById('root-dot');
+      const rootStat = document.getElementById('root-status');
+      if (rootResult.status === 'fulfilled' && rootResult.value.ok) {
+        rootBox.textContent  = rootResult.value.text.trim();
+        rootBox.className    = 'response-box ok';
+        rootDot.className    = 'dot ok';
+        rootStat.textContent = '200 OK — Backend reachable';
+      } else {
+        const msg = rootResult.reason?.message || 'Request failed';
+        rootBox.textContent  = msg;
+        rootBox.className    = 'response-box err';
+        rootDot.className    = 'dot err';
+        rootStat.textContent = 'Error — ' + msg;
+      }
+
+      // Health
+      const healthBox  = document.getElementById('health-response');
+      const healthDot  = document.getElementById('health-dot');
+      const healthStat = document.getElementById('health-status');
+      if (healthResult.status === 'fulfilled' && healthResult.value.ok) {
+        healthBox.textContent  = healthResult.value.text.trim();
+        healthBox.className    = 'response-box ok';
+        healthDot.className    = 'dot ok';
+        healthStat.textContent = '200 OK — Health check passed';
+      } else {
+        const msg = healthResult.reason?.message || 'Request failed';
+        healthBox.textContent  = msg;
+        healthBox.className    = 'response-box err';
+        healthDot.className    = 'dot err';
+        healthStat.textContent = 'Error — ' + msg;
+      }
+
+      btn.classList.remove('loading');
+      btn.disabled = false;
+    }
+
+    // Fetch on load
+    fetchAll();
+    // Auto-refresh every 30 s
+    setInterval(fetchAll, 30000);
+  </script>
+</body>
+</html>

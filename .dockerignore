@@ -1,0 +1,29 @@
+# Go build artifacts
+backend/server
+backend/*.exe
+
+# Node / npm (if added later)
+node_modules/
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Env files
+*.env
+.env*
+
+# Test output
+*.test
+coverage.out
